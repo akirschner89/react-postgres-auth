@@ -1,13 +1,8 @@
 const { Router } = require('express')
-const SHA256 = require('crypto-js/sha256')
 const pool = require('./db')
-const { APP_SECRET } = require('./secrets')
+const { hash } = require('./helper')
 
 const router = new Router()
-
-const hash = str => {
-    return SHA256(`${APP_SECRET}${str}${APP_SECRET}`).toString()
-}
 
 router.get('/all', (req, res, next) => {
     pool.query('SELECT * FROM users', (q_err, q_res) => {

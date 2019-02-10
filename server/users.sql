@@ -1,6 +1,7 @@
 CREATE TABLE users(
     username_hash varchar(64),
-    password_hash varchar(64)
+    password_hash varchar(64),
+    session_id varchar(36)
 );
 
 INSERT INTO users(username_hash, password_hash) VALUES 

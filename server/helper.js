@@ -26,12 +26,14 @@ class Session {
     }
 
     static parse(session_str) {
-        const session_data = session_str.split('|')
+        const session_data = session_str
+            ? session_str.split("|")
+            : { username: "", id: "", hash: "" };
         return {
             username: session_data[0],
             id: session_data[1],
             session_hash: session_data[2]
-        }
+        };
     }
 
     static verify(session_str) {

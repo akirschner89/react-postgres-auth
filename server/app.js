@@ -1,12 +1,18 @@
+// start with npm run dev
 const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const user = require('./user')
+const cors = require('cors')
 
 const app = express()
 
 app.use(bodyParser.json())
 app.use(cookieParser())
+app.use(cors({
+    origin: 'http://localhost:1234',
+    credentials: true
+}))
 app.use('/user', user)
 
 

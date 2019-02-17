@@ -13,7 +13,6 @@ router.get('/all', (req, res, next) => {
 })
 
 const set_session_cookie = (session_str, res) => {
-
     res.cookie('session_str', session_str, {
         expire: Date.now() + 3600000,
         httpOnly: true
@@ -131,10 +130,11 @@ router.get('/authenticated', (req, res, next) => {
         [hash(username)],
         (q_err, q_res) => {
             if (q_err) return next(q_err)  
+            if (q_res.rows.length === 0) return next(new Error('Not a valid username'))
             
             res.json({ 
-                authenticated: Session.verify(req.cookies.session_str) &&
-                q_res.rows[0].session_id === id
+                authenticated: Session.verify(req.cookies.session_str) 
+                && q_res.rows[0].session_id === id
             })
         }
     )

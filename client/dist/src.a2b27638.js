@@ -43532,6 +43532,8 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -43569,6 +43571,22 @@ function (_Component) {
     return _possibleConstructorReturn(_this, (_temp = _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(AuthForm)).call.apply(_getPrototypeOf2, [this].concat(args))), _this.state = {
       username: '',
       password: ''
+    }, _this.updateInput = function (type) {
+      return function (e) {
+        _this.setState(_defineProperty({}, type, e.target.value));
+      };
+    }, _this.signup = function () {
+      var _this$state = _this.state,
+          username = _this$state.username,
+          password = _this$state.password;
+
+      _this.props.auth.signup(username, password);
+    }, _this.login = function () {
+      var _this$state2 = _this.state,
+          username = _this$state2.username,
+          password = _this$state2.password;
+
+      _this.props.auth.login(username, password);
     }, _temp));
   }
 
@@ -43578,12 +43596,18 @@ function (_Component) {
       return _react.default.createElement("div", null, _react.default.createElement("h2", null, "Foodie Hub"), _react.default.createElement(_reactBootstrap.FormGroup, null, _react.default.createElement(_reactBootstrap.FormControl, {
         type: "text",
         value: this.state.username,
-        placeholder: "username"
+        placeholder: "username",
+        onChange: this.updateInput('username')
       }), _react.default.createElement("br", null), _react.default.createElement(_reactBootstrap.FormControl, {
         type: "password",
         value: this.state.password,
-        placeholder: "password"
-      })), _react.default.createElement(_reactBootstrap.Button, null, "Log In"), _react.default.createElement("span", null, " or "), _react.default.createElement(_reactBootstrap.Button, null, "Sign Up"));
+        placeholder: "password",
+        onChange: this.updateInput('password')
+      })), _react.default.createElement(_reactBootstrap.Button, {
+        onClick: this.login
+      }, "Log In"), _react.default.createElement("span", null, " or "), _react.default.createElement(_reactBootstrap.Button, {
+        onClick: this.signup
+      }, "Sign Up"));
     }
   }]);
 
@@ -43632,6 +43656,7 @@ var _Logout = _interopRequireDefault(require("./Logout"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// start with npm start
 var Home = function Home(props) {
   return _react.default.createElement("div", null, _react.default.createElement("h2", null, "Foodie Hub"), _react.default.createElement("div", null, _react.default.createElement(_reactRouterDom.Link, {
     to: "/ramen"
@@ -43726,7 +43751,18 @@ var _Ramen = _interopRequireDefault(require("./Ramen"));
 var _Sushi = _interopRequireDefault(require("./Sushi"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./App":"src/components/App.js","./Ramen":"src/components/Ramen.js","./Sushi":"src/components/Sushi.js"}],"src/Auth.js":[function(require,module,exports) {
+},{"./App":"src/components/App.js","./Ramen":"src/components/Ramen.js","./Sushi":"src/components/Sushi.js"}],"config.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.CONNECTION = void 0;
+var domain = 'localhost';
+var port = '3000';
+var CONNECTION = "http://".concat(domain, ":").concat(port);
+exports.CONNECTION = CONNECTION;
+},{}],"src/Auth.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -43736,29 +43772,83 @@ exports.default = void 0;
 
 var _history = _interopRequireDefault(require("./history"));
 
+var _config = require("../config");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Auth = function Auth() {
-  _classCallCheck(this, Auth);
+  var _this = this;
 
-  this.signup = function () {// todo
-  };
+  _classCallCheck(this, Auth);
 
   this.loggedIn = false;
 
-  this.login = function () {// todo
+  this.authenticate = function (username, password, type) {
+    fetch("".concat(_config.CONNECTION, "/user/").concat(type), {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password
+      })
+    }).then(function (response) {
+      return response.json();
+    }).then(function (json) {
+      if (json.type === 'error') {
+        alert(json.msg);
+      } else {
+        _this.loggedIn = true;
+
+        _history.default.replace('/callback');
+      }
+    });
   };
 
-  this.logout = function () {// todo
+  this.signup = function (username, password) {
+    _this.authenticate(username, password, 'new');
+  };
+
+  this.login = function (username, password) {
+    _this.authenticate(username, password, 'login');
+  };
+
+  this.logout = function () {
+    fetch("".concat(_config.CONNECTION, "/user/logout"), {
+      credentials: 'include'
+    }).then(function (response) {
+      return response.json();
+    }).then(function () {
+      _this.loggedIn = false;
+
+      _history.default.replace('/callback');
+    });
+  };
+
+  this.checkAuthentication = function () {
+    return new Promise(function (resolve, reject) {
+      fetch("".concat(_config.CONNECTION, "/user/authenticated"), {
+        credentials: 'include'
+      }).then(function (response) {
+        return response.json();
+      }).then(function (json) {
+        if (json.authenticated) {
+          _this.loggedIn = true;
+        }
+
+        resolve();
+      });
+    });
   };
 };
 
-;
 var _default = Auth;
 exports.default = _default;
-},{"./history":"src/history.js"}],"src/index.js":[function(require,module,exports) {
+},{"./history":"src/history.js","../config":"config.js"}],"src/index.js":[function(require,module,exports) {
 "use strict";
 
 var _react = _interopRequireDefault(require("react"));
@@ -43777,11 +43867,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var auth = new _Auth.default();
 
-var callbackComponent = function callbackComponent(props) {
-  if (props.location.hash.includes('access_token')) {
+var callbackComponent = function callbackComponent() {
+  if (auth.loggedIn) {
     setTimeout(function () {
-      return auth.handleAuthentication();
-    });
+      return _history.default.replace('/');
+    }, 1500);
     return _react.default.createElement("h4", null, "loading...");
   } else {
     return _react.default.createElement(_reactRouterDom.Redirect, {
@@ -43807,28 +43897,30 @@ var AuthRoute = function AuthRoute(props) {
   });
 };
 
-(0, _reactDom.render)(_react.default.createElement(_reactRouterDom.Router, {
-  history: _history.default
-}, _react.default.createElement(_reactRouterDom.Switch, null, _react.default.createElement(_reactRouterDom.Route, {
-  exact: true,
-  path: "/",
-  render: function render() {
-    return _react.default.createElement(_components.App, {
-      auth: auth
-    });
-  }
-}), _react.default.createElement(_reactRouterDom.Route, {
-  path: "/callback",
-  render: function render(props) {
-    return callbackComponent(props);
-  }
-}), _react.default.createElement(AuthRoute, {
-  path: "/ramen",
-  Component: _components.Ramen
-}), _react.default.createElement(AuthRoute, {
-  path: "/sushi",
-  Component: _components.Sushi
-}))), document.getElementById('root'));
+auth.checkAuthentication().then(function () {
+  (0, _reactDom.render)(_react.default.createElement(_reactRouterDom.Router, {
+    history: _history.default
+  }, _react.default.createElement(_reactRouterDom.Switch, null, _react.default.createElement(_reactRouterDom.Route, {
+    exact: true,
+    path: "/",
+    render: function render() {
+      return _react.default.createElement(_components.App, {
+        auth: auth
+      });
+    }
+  }), _react.default.createElement(_reactRouterDom.Route, {
+    path: "/callback",
+    render: function render(props) {
+      return callbackComponent(props);
+    }
+  }), _react.default.createElement(AuthRoute, {
+    path: "/ramen",
+    Component: _components.Ramen
+  }), _react.default.createElement(AuthRoute, {
+    path: "/sushi",
+    Component: _components.Sushi
+  }))), document.getElementById('root'));
+});
 },{"react":"node_modules/react/index.js","react-dom":"node_modules/react-dom/index.js","./history":"src/history.js","react-router-dom":"node_modules/react-router-dom/es/index.js","./components":"src/components/index.js","./Auth":"src/Auth.js"}],"../../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -43856,7 +43948,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54683" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55123" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
